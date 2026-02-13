@@ -1,0 +1,442 @@
+# ==================== CONFIG SERVER ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: ridesharing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      containers:
+        - name: config-server
+          image: ghcr.io/ridesharing/config-server:latest
+          ports:
+            - containerPort: 8888
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+  namespace: ridesharing
+spec:
+  selector:
+    app: config-server
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+# ==================== SERVICE REGISTRY (EUREKA) ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-registry
+  namespace: ridesharing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-registry
+  template:
+    metadata:
+      labels:
+        app: service-registry
+    spec:
+      containers:
+        - name: service-registry
+          image: ghcr.io/ridesharing/service-registry:latest
+          ports:
+            - containerPort: 8761
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-registry
+  namespace: ridesharing
+spec:
+  selector:
+    app: service-registry
+  ports:
+    - port: 8761
+      targetPort: 8761
+---
+# ==================== API GATEWAY ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ghcr.io/ridesharing/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: ridesharing
+spec:
+  type: LoadBalancer
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# ==================== USER SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: ghcr.io/ridesharing/user-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/user_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+# ==================== RIDE SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ride-service
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ride-service
+  template:
+    metadata:
+      labels:
+        app: ride-service
+    spec:
+      containers:
+        - name: ride-service
+          image: ghcr.io/ridesharing/ride-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/ride_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ride-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: ride-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+# ==================== DRIVER LOCATION SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: driver-location-service
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: driver-location-service
+  template:
+    metadata:
+      labels:
+        app: driver-location-service
+    spec:
+      containers:
+        - name: driver-location-service
+          image: ghcr.io/ridesharing/driver-location-service:latest
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: driver-location-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: driver-location-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+# ==================== PRICING SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing-service
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pricing-service
+  template:
+    metadata:
+      labels:
+        app: pricing-service
+    spec:
+      containers:
+        - name: pricing-service
+          image: ghcr.io/ridesharing/pricing-service:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/pricing_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: pricing-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+# ==================== PAYMENT SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: ridesharing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: ghcr.io/ridesharing/payment-service:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/payment_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+---
+# ==================== NOTIFICATION SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: ridesharing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: ghcr.io/ridesharing/notification-service:latest
+          ports:
+            - containerPort: 8086
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/notification_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 8086
+      targetPort: 8086
+---
+# ==================== RATING SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rating-service
+  namespace: ridesharing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rating-service
+  template:
+    metadata:
+      labels:
+        app: rating-service
+    spec:
+      containers:
+        - name: rating-service
+          image: ghcr.io/ridesharing/rating-service:latest
+          ports:
+            - containerPort: 8087
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/rating_db
+          envFrom:
+            - configMapRef:
+                name: ridesharing-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8087
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: ridesharing
+spec:
+  selector:
+    app: rating-service
+  ports:
+    - port: 8087
+      targetPort: 8087
