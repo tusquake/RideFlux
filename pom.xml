@@ -28,6 +28,8 @@
         <module>service-registry</module>
         <module>api-gateway</module>
         <module>user-service</module>
+        <module>pricing-service</module>
+        <module>driver-location-service</module>
     </modules>
 
     <dependencyManagement>
