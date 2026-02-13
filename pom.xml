@@ -30,6 +30,7 @@
         <module>user-service</module>
         <module>pricing-service</module>
         <module>driver-location-service</module>
+        <module>ride-service</module>
     </modules>
 
     <dependencyManagement>
