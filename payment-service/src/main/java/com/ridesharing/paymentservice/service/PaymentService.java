@@ -8,6 +8,7 @@ import com.ridesharing.paymentservice.model.PaymentStatus;
 import com.ridesharing.paymentservice.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,9 @@ import java.util.UUID;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final RabbitTemplate rabbitTemplate;
+
+    private static final String RIDE_EVENTS_EXCHANGE = "ride.events";
 
     public PaymentResponse processPayment(RideEvent event) {
         if (paymentRepository.findByRideId(event.getRideId()).isPresent()) {
@@ -49,11 +53,22 @@ public class PaymentService {
             payment = paymentRepository.save(payment);
 
             log.info("Payment {} COMPLETED — txn: {}", payment.getId(), payment.getTransactionId());
+
+            // SAGA: publish payment success event back to Ride Service
+            event.setEventType("PAYMENT_SUCCESS");
+            rabbitTemplate.convertAndSend(RIDE_EVENTS_EXCHANGE, "payment.success", event);
+            log.info("SAGA: Published PAYMENT_SUCCESS for ride: {}", event.getRideId());
+
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason(e.getMessage());
             paymentRepository.save(payment);
             log.error("Payment {} FAILED: {}", payment.getId(), e.getMessage());
+
+            // SAGA: publish payment failure event — triggers compensating transaction
+            event.setEventType("PAYMENT_FAILED");
+            rabbitTemplate.convertAndSend(RIDE_EVENTS_EXCHANGE, "payment.failed", event);
+            log.warn("SAGA: Published PAYMENT_FAILED for ride: {} — compensation needed!", event.getRideId());
         }
 
         return mapToResponse(payment);

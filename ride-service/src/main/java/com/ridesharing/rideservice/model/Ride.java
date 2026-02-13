@@ -73,4 +73,8 @@ public class Ride {
     private LocalDateTime cancelledAt;
 
     private String cancellationReason;
+
+    // SAGA pattern — tracks payment status across services
+    @Builder.Default
+    private String paymentStatus = "PENDING";
 }

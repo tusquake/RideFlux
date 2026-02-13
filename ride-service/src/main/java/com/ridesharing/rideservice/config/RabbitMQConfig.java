@@ -16,9 +16,15 @@ public class RabbitMQConfig {
     public static final String RIDE_COMPLETED_QUEUE = "ride.completed.queue";
     public static final String RIDE_CANCELLED_QUEUE = "ride.cancelled.queue";
 
+    // SAGA pattern — compensation queues
+    public static final String PAYMENT_SUCCESS_QUEUE = "payment.success.queue";
+    public static final String PAYMENT_FAILED_QUEUE = "payment.failed.queue";
+
     public static final String RIDE_BOOKED_KEY = "ride.booked";
     public static final String RIDE_COMPLETED_KEY = "ride.completed";
     public static final String RIDE_CANCELLED_KEY = "ride.cancelled";
+    public static final String PAYMENT_SUCCESS_KEY = "payment.success";
+    public static final String PAYMENT_FAILED_KEY = "payment.failed";
 
     @Bean
     public TopicExchange rideEventsExchange() {
@@ -40,6 +46,17 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(RIDE_CANCELLED_QUEUE).build();
     }
 
+    // SAGA queues
+    @Bean
+    public Queue paymentSuccessQueue() {
+        return QueueBuilder.durable(PAYMENT_SUCCESS_QUEUE).build();
+    }
+
+    @Bean
+    public Queue paymentFailedQueue() {
+        return QueueBuilder.durable(PAYMENT_FAILED_QUEUE).build();
+    }
+
     @Bean
     public Binding rideBookedBinding(Queue rideBookedQueue, TopicExchange rideEventsExchange) {
         return BindingBuilder.bind(rideBookedQueue).to(rideEventsExchange).with(RIDE_BOOKED_KEY);
@@ -53,6 +70,16 @@ public class RabbitMQConfig {
     @Bean
     public Binding rideCancelledBinding(Queue rideCancelledQueue, TopicExchange rideEventsExchange) {
         return BindingBuilder.bind(rideCancelledQueue).to(rideEventsExchange).with(RIDE_CANCELLED_KEY);
+    }
+
+    @Bean
+    public Binding paymentSuccessBinding(Queue paymentSuccessQueue, TopicExchange rideEventsExchange) {
+        return BindingBuilder.bind(paymentSuccessQueue).to(rideEventsExchange).with(PAYMENT_SUCCESS_KEY);
+    }
+
+    @Bean
+    public Binding paymentFailedBinding(Queue paymentFailedQueue, TopicExchange rideEventsExchange) {
+        return BindingBuilder.bind(paymentFailedQueue).to(rideEventsExchange).with(PAYMENT_FAILED_KEY);
     }
 
     @Bean
