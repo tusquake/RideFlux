@@ -5,6 +5,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: ridesharing-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -25,6 +26,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ridesharing-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -40,6 +42,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: ridesharing-rabbitmq
+    restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -59,8 +62,9 @@ services:
   # ==================== CONFIG SERVER ====================
 
   config-server:
-    build: ./config-server
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/config-server:latest
     container_name: ridesharing-config-server
+    restart: unless-stopped
     ports:
       - "8888:8888"
     healthcheck:
@@ -75,8 +79,9 @@ services:
   # ==================== SERVICE REGISTRY ====================
 
   service-registry:
-    build: ./service-registry
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/service-registry:latest
     container_name: ridesharing-service-registry
+    restart: unless-stopped
     ports:
       - "8761:8761"
     depends_on:
@@ -94,8 +99,9 @@ services:
   # ==================== API GATEWAY ====================
 
   api-gateway:
-    build: ./api-gateway
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/api-gateway:latest
     container_name: ridesharing-api-gateway
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
@@ -109,8 +115,9 @@ services:
   # ==================== MICROSERVICES ====================
 
   user-service:
-    build: ./user-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/user-service:latest
     container_name: ridesharing-user-service
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
@@ -127,8 +134,9 @@ services:
       - ridesharing-network
 
   pricing-service:
-    build: ./pricing-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/pricing-service:latest
     container_name: ridesharing-pricing-service
+    restart: unless-stopped
     ports:
       - "8084:8084"
     environment:
@@ -145,8 +153,9 @@ services:
       - ridesharing-network
 
   driver-location-service:
-    build: ./driver-location-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/driver-location-service:latest
     container_name: ridesharing-driver-location
+    restart: unless-stopped
     ports:
       - "8083:8083"
     environment:
@@ -161,8 +170,9 @@ services:
       - ridesharing-network
 
   ride-service:
-    build: ./ride-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/ride-service:latest
     container_name: ridesharing-ride-service
+    restart: unless-stopped
     ports:
       - "8082:8082"
     environment:
@@ -182,8 +192,9 @@ services:
       - ridesharing-network
 
   payment-service:
-    build: ./payment-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/payment-service:latest
     container_name: ridesharing-payment-service
+    restart: unless-stopped
     ports:
       - "8085:8085"
     environment:
@@ -203,8 +214,9 @@ services:
       - ridesharing-network
 
   notification-service:
-    build: ./notification-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/notification-service:latest
     container_name: ridesharing-notification-service
+    restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
@@ -224,8 +236,9 @@ services:
       - ridesharing-network
 
   rating-service:
-    build: ./rating-service
+    image: asia-south1-docker.pkg.dev/rideflux-487315/ridesharing/rating-service:latest
     container_name: ridesharing-rating-service
+    restart: unless-stopped
     ports:
       - "8087:8087"
     environment:
